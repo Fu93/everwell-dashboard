@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Everwell — Care Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap"
+    />
+    <link rel="stylesheet" href="hark.css" />
+    <link rel="stylesheet" href="hark-hero.css" />
+    <link rel="stylesheet" href="hark-charts.css" />
+    <style>
+      .x-top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 12px 16px 12px 20px; border-radius: var(--r-l); background: var(--fill-tertiary); }
+      .x-logo { display: flex; align-items: center; gap: 8px; font: var(--weight-bold) var(--size-heading)/1 var(--sans); }
+      .x-logo::before { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--chart-2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--chart-2) 30%, transparent); }
+      .x-facility { font: var(--type-small); color: var(--text-secondary); }
+      .x-top__right { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+      .x-date { font: var(--type-label); }
+      .x-user { display: flex; align-items: center; gap: 8px; font: var(--type-label); }
+      .x-avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--fill-primary); color: var(--text-primary-on); font: var(--type-tag); }
+      .x-disclaimer { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--r-pill); border: 1px solid var(--stroke-primary); font: var(--type-tag); color: var(--text-secondary); background: var(--fill-primary-on); }
+      .x-disclaimer::before { content: "i"; width: 14px; height: 14px; display: grid; place-items: center; border-radius: 50%; border: 1px solid currentColor; font-size: 10px; line-height: 1; }
+
+      .x-app { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 24px; align-items: start; }
+      .x-side { position: sticky; top: 12px; display: flex; flex-direction: column; gap: 4px; }
+      .x-navbtn { display: flex; align-items: center; gap: 10px; min-height: var(--tap); padding: 10px 14px; border: 0; border-radius: var(--r-s); background: transparent; color: var(--text-secondary); font: var(--type-label); text-align: left; cursor: pointer; }
+      .x-navbtn:hover { background: var(--hover-wash); color: var(--text-primary); }
+      .x-navbtn[aria-current="page"] { background: var(--fill-primary); color: var(--text-primary-on); }
+      .x-navbtn .x-count { margin-left: auto; font: var(--type-tag); opacity: 0.8; }
+      @media (max-width: 860px) {
+        .x-app { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .x-side { position: static; flex-direction: row; overflow-x: auto; }
+        .x-navbtn { flex: none; }
+      }
+
+      .x-view { display: grid; gap: 20px; align-content: start; min-width: 0; }
+      .x-view[hidden] { display: none; }
+      .x-viewhead { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+      .x-viewhead h1 { font: var(--type-title); }
+      .x-viewhead p { color: var(--text-secondary); margin-top: 4px; }
+      .x-panel { padding: 20px 24px; border-radius: var(--r-m); border: 1px solid var(--stroke-primary); min-width: 0; }
+      .x-panel > h2 { font: var(--type-heading); margin-bottom: 12px; }
+      .x-panel--tint { background: var(--fill-tertiary); border-color: transparent; }
+
+      .x-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+      .x-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+      .x-filter { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid var(--stroke-primary); background: transparent; color: var(--text-primary); font: var(--type-tag); cursor: pointer; }
+      .x-filter:hover { background: var(--hover-wash); }
+      .x-filter[aria-pressed="true"] { background: var(--fill-primary); color: var(--text-primary-on); border-color: var(--fill-primary); }
+      .x-filter span { opacity: 0.7; }
+      .x-input { min-height: 40px; padding: 8px 14px; border-radius: var(--r-s); border: 1px solid var(--stroke-primary); background: var(--fill-primary-on); color: var(--text-primary); font: var(--type-small); }
+      .x-search { width: min(100%, 260px); border-radius: var(--r-pill); }
+      @media (pointer: coarse), (max-width: 599px) { .x-filter, .x-input { min-height: var(--tap); } .x-search { width: 100%; } }
+
+      .x-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border-radius: var(--r-pill); font: var(--type-tag); color: var(--text-primary); white-space: nowrap; }
+      .x-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; flex: none; }
+      .x-status--high { background: color-mix(in srgb, var(--chart-7) 40%, transparent); }
+      .x-status--high::before { background: var(--chart-bad); }
+      .x-status--watch { background: color-mix(in srgb, var(--chart-5) 45%, transparent); }
+      .x-status--watch::before { background: color-mix(in srgb, var(--chart-3) 60%, var(--text-primary)); }
+      .x-status--gap { background: color-mix(in srgb, var(--chart-1) 45%, transparent); }
+      .x-status--gap::before { background: color-mix(in srgb, var(--chart-1) 50%, var(--text-primary)); }
+      .x-status--stable { background: color-mix(in srgb, var(--chart-2) 25%, transparent); }
+      .x-status--stable::before { background: var(--chart-2); }
+      .x-cell-stack { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+      .x-rowbtn { cursor: pointer; }
+      .x-empty { padding: 24px 0; color: var(--text-secondary); text-align: center; }
+
+      .x-back { cursor: pointer; }
+      .x-detailhead { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; }
+      .x-detailhead h1 { font: var(--type-title); }
+      .x-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+      .x-badges { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .x-why { display: grid; gap: 10px; }
+      .x-why .callout__lead { max-width: 70ch; }
+      .x-chartshead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+      .x-chartshead h2 { font: var(--type-heading); }
+      .x-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: var(--r-pill); background: var(--fill-tertiary); }
+      .x-seg button { min-height: 32px; padding: 4px 14px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--text-secondary); font: var(--type-tag); cursor: pointer; }
+      .x-seg button[aria-pressed="true"] { background: var(--fill-primary-on); color: var(--text-primary); box-shadow: 0 1px 3px var(--stroke-primary); }
+      @media (pointer: coarse), (max-width: 599px) { .x-seg button { min-height: var(--tap); } }
+      .x-charts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      .x-charts .chart { margin: 0; }
+      @media (max-width: 760px) { .x-charts { grid-template-columns: minmax(0, 1fr); } }
+
+      .x-form { display: grid; gap: 16px; align-content: start; }
+      .x-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+      .x-form legend, .x-label { display: block; font: var(--type-label); margin-bottom: 8px; padding: 0; }
+      .x-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+      .x-opt { position: relative; }
+      .x-opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+      .x-opt span { display: inline-flex; align-items: center; min-height: 36px; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid var(--stroke-primary); font: var(--type-tag); }
+      .x-opt input:checked + span { background: var(--fill-primary); color: var(--text-primary-on); border-color: var(--fill-primary); }
+      .x-opt input:focus-visible + span { outline: 2px solid var(--fill-primary); outline-offset: 2px; }
+      @media (pointer: coarse), (max-width: 599px) { .x-opt span { min-height: var(--tap); } }
+      .x-form textarea { width: 100%; min-height: 72px; resize: vertical; }
+      .x-form .btn { justify-self: start; cursor: pointer; }
+      .x-confirm { font: var(--type-small); color: var(--text-secondary); }
+      .x-confirm:empty { display: none; }
+      .x-log { list-style: none; margin: 0; padding: 0; font: var(--type-small); }
+      .x-log li { display: grid; grid-template-columns: 7em minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--stroke-secondary); }
+      .x-log li:last-child { border-bottom: 0; }
+      .x-log time { color: var(--text-secondary); }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="top">
+      <header class="x-top">
+        <span class="x-logo">Everwell</span>
+        <span class="x-facility">Cura Serena Home Care — Milano</span>
+        <div class="x-top__right">
+          <span class="x-disclaimer">Care-visit prioritisation tool — not a diagnostic device</span>
+          <span class="x-date">Thursday 29 October 2026</span>
+          <span class="x-user"><span class="x-avatar" aria-hidden="true">GB</span>Giulia Bianchi</span>
+        </div>
+      </header>
+
+      <div class="x-app">
+        <nav class="x-side" aria-label="Dashboard">
+          <button class="x-navbtn" type="button" data-view="priorities" aria-current="page">Today's priorities <span class="x-count" id="nav-count"></span></button>
+          <button class="x-navbtn" type="button" data-view="how">How it works</button>
+        </nav>
+
+        <main class="main">
+          <!-- SCREEN 1 -->
+          <section class="x-view" id="view-priorities" aria-labelledby="h-priorities">
+            <div class="x-viewhead">
+              <div>
+                <h1 id="h-priorities">Good morning, Giulia</h1>
+                <p id="summary-line">Today's priorities, sorted by who needs attention first.</p>
+              </div>
+            </div>
+
+            <div class="x-panel x-panel--tint">
+              <section class="stats" aria-label="Summary">
+                <div class="stat"><span class="stat__fig" id="t-all">12</span><span class="stat__label">Clients monitored</span></div>
+                <div class="stat"><span class="stat__fig" id="t-high">2</span><span class="stat__label">High priority</span></div>
+                <div class="stat"><span class="stat__fig" id="t-watch">3</span><span class="stat__label">Watch</span></div>
+                <div class="stat"><span class="stat__fig" id="t-gap">2</span><span class="stat__label">Data gaps</span></div>
+                <div class="stat"><span class="stat__fig" id="t-stable">5</span><span class="stat__label">Stable</span></div>
+              </section>
+            </div>
+
+            <div class="x-panel">
+              <div class="x-toolbar">
+                <div class="x-filters" id="filters" role="group" aria-label="Filter by status"></div>
+                <input class="x-input x-search" id="search" type="search" placeholder="Search clients or devices" aria-label="Search clients" />
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <caption>Priority list · High → Watch → Data gap → Stable</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Client</th>
+                      <th scope="col">Last sync</th>
+                      <th scope="col">Status</th>
+                      <th scope="col">Reason</th>
+                      <th scope="col"><span class="sub">Action</span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="rows"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- SCREEN 2 -->
+          <section class="x-view" id="view-detail" hidden aria-labelledby="d-name">
+            <div><button class="btn x-back" type="button" id="back">← Back to priorities</button></div>
+            <div class="x-detailhead">
+              <div>
+                <h1 id="d-name" tabindex="-1">Client</h1>
+                <div class="x-meta" id="d-meta"></div>
+              </div>
+              <div class="x-badges" id="d-badges"></div>
+            </div>
+
+            <aside class="callout x-why" aria-label="Why flagged">
+              <p class="callout__head" id="d-why-head">Why flagged</p>
+              <p class="callout__lead" id="d-note"></p>
+              <p class="fineprint" id="d-method"></p>
+              <p class="fineprint" id="d-review"></p>
+            </aside>
+
+            <div class="x-panel x-panel--tint">
+              <h2>Last 3 days against usual</h2>
+              <section class="stats" id="d-stats" aria-label="Last 3 days against usual"></section>
+            </div>
+
+            <div class="x-chartshead">
+              <h2>Trends against personal baseline</h2>
+              <div class="x-seg" role="group" aria-label="Time range">
+                <button type="button" data-range="7" aria-pressed="false">7 days</button>
+                <button type="button" data-range="30" aria-pressed="true">30 days</button>
+              </div>
+            </div>
+            <div class="x-charts" id="d-charts"></div>
+            <p class="fineprint">Shaded band: usual range (28-day personal baseline median ± 2 robust SD). Highlighted dots: days outside the usual range. Gaps: no data received.</p>
+
+            <div class="pair">
+              <div class="x-panel">
+                <h2>Schedule wellness visit</h2>
+                <div id="visit-box"></div>
+              </div>
+              <div class="x-panel">
+                <h2>Record visit outcome</h2>
+                <form class="x-form" id="outcome-form">
+                  <fieldset>
+                    <legend>Outcome</legend>
+                    <div class="x-opts">
+                      <label class="x-opt"><input type="radio" name="outcome" value="none" checked /><span>No issue</span></label>
+                      <label class="x-opt"><input type="radio" name="outcome" value="followup" /><span>Follow-up needed</span></label>
+                      <label class="x-opt"><input type="radio" name="outcome" value="gp" /><span>Escalated to GP</span></label>
+                    </div>
+                  </fieldset>
+                  <div>
+                    <label class="x-label" for="outcome-note">Note <span class="sub">(optional)</span></label>
+                    <textarea class="x-input" id="outcome-note" placeholder="e.g. Knee pain after a fall at home, family informed"></textarea>
+                  </div>
+                  <button class="btn" type="submit">Save outcome</button>
+                  <p class="x-confirm" id="outcome-confirm" role="status"></p>
+                </form>
+              </div>
+            </div>
+
+            <div class="x-panel">
+              <h2>Activity</h2>
+              <ul class="x-log" id="d-log"></ul>
+            </div>
+          </section>
+
+          <!-- SCREEN 3 -->
+          <section class="x-view" id="view-how" hidden aria-labelledby="h-how">
+            <div class="x-viewhead">
+              <div>
+                <h1 id="h-how">How it works</h1>
+                <p>From a client's own wearable to a coordinator's decision, in six steps.</p>
+              </div>
+              <span class="chip">Prototype with simulated data</span>
+            </div>
+            <div class="steps">
+              <article class="step">
+                <div class="step__intro"><p class="step__num">01</p><p class="step__eyebrow">Client</p></div>
+                <div><h3>Consumer wearable</h3><p>Apple Watch, Garmin or Fitbit, the device the client already owns. Everwell is hardware-agnostic.</p></div>
+              </article>
+              <article class="step">
+                <div class="step__intro"><p class="step__num">02</p><p class="step__eyebrow">Vendor</p></div>
+                <div><h3>Companion app / vendor cloud</h3><p>The watch syncs to its own app and cloud as usual: steps, sleep, resting HR, night wakings, HRV.</p></div>
+              </article>
+              <article class="step">
+                <div class="step__intro"><p class="step__num">03</p><p class="step__eyebrow">Integration</p></div>
+                <div><h3>Aggregation API (Terra)</h3><p>One API normalises data from every brand into the same daily metrics.</p></div>
+              </article>
+              <article class="step">
+                <div class="step__intro"><p class="step__num">04</p><p class="step__eyebrow">Platform</p></div>
+                <div><h3>Everwell, EU hosting</h3><p>Data is stored and processed only in the EU.</p></div>
+              </article>
+              <article class="step">
+                <div class="step__intro"><p class="step__num">05</p><p class="step__eyebrow">Analysis</p></div>
+                <div>
+                  <h3>Detection engine</h3>
+                  <ul class="step__pills"><li><b>28-day</b> personal baseline</li><li>z-score</li><li>EWMA</li><li>change-point</li></ul>
+                  <p>Each client is compared with their own usual range, not a population norm. Sudden changes, slow drifts and missing data are flagged.</p>
+                </div>
+              </article>
+              <article class="step">
+                <div class="step__intro"><p class="step__num">06</p><p class="step__eyebrow">People</p></div>
+                <div><h3>Care coordinator</h3><p>Sees a ranked list with plain-language reasons, then decides whether to visit, call or wait.</p></div>
+              </article>
+            </div>
+            <div class="cards">
+              <div>
+                <h3>The human always decides</h3>
+                <p>Everwell ranks care visits; it does not diagnose. Every action is chosen and recorded by a coordinator.</p>
+              </div>
+              <div>
+                <h3>Privacy by design</h3>
+                <ul>
+                  <li>Health data under GDPR Art. 9</li>
+                  <li>Explicit consent from each client</li>
+                  <li>EU data residency</li>
+                </ul>
+              </div>
+            </div>
+            <p class="fineprint">Prototype with simulated data. No real client data is shown.</p>
+          </section>
+        </main>
+      </div>
+
+      <footer class="foot">
+        <p>Everwell 2.0 MVP prototype · simulated data only</p>
+        <a class="badge" href="https://hark.com/" target="_blank" rel="noopener"><span class="hark-mark"></span><span>built by hark</span></a>
+      </footer>
+    </div>
+    <script type="application/json" id="clients-data">
+      [
+        {"id":"maria","name":"Maria Rossi","first":"Maria","age":82,"device":"Apple Watch SE","sync":"07:40","status":"high",
+         "reason":"Mobility ~45% below usual for 10 days, more night-time waking",
+         "note":"Mobility has been about 45% below Maria's usual level for 10 days, with more night-time waking. Consider a wellness visit.",
+         "method":"Method: 28-day personal baseline, z-score −2.6, EWMA sustained drift",
+         "base":{"steps":[4800,350],"sleep":[7.0,0.35],"rhr":[66,1.6],"hrv":[28,2.5],"wake":[1,0.5]},
+         "effects":[{"m":"steps","start":30,"end":34,"to":2600},{"m":"wake","start":32,"end":36,"to":4}]},
+        {"id":"giuseppe","name":"Giuseppe Ferri","first":"Giuseppe","age":78,"device":"Garmin Vivosmart 5","sync":"06:55","status":"high",
+         "reason":"Sudden drop in activity 3 days ago, resting HR above usual",
+         "note":"Giuseppe's activity dropped suddenly 3 days ago, from about 6,200 to 1,900 steps a day, and his resting heart rate has been above his usual level since (around 71 bpm against 62). Consider a wellness visit today.",
+         "method":"Method: 28-day personal baseline, z-score −3.4 (steps) / +2.8 (resting HR), change-point detected 26 Oct",
+         "base":{"steps":[6200,420],"sleep":[7.1,0.3],"rhr":[62,1.5],"hrv":[34,3],"wake":[1,0.5]},
+         "effects":[{"m":"steps","start":40,"end":40,"to":1900},{"m":"rhr","start":40,"end":40,"to":71}]},
+        {"id":"anna","name":"Anna Colombo","first":"Anna","age":74,"device":"Fitbit Inspire 3","sync":"07:10","status":"watch",
+         "reason":"Sleep down from 7.2 h to 5.6 h for 5 nights",
+         "note":"Anna has slept about 5.6 hours a night for the last 5 nights, against her usual 7.2 hours. Other measures are in her usual range. Worth asking about at the next contact.",
+         "method":"Method: 28-day personal baseline, z-score −2.1 (sleep), EWMA sustained drift over 5 days",
+         "base":{"steps":[5400,380],"sleep":[7.2,0.3],"rhr":[64,1.5],"hrv":[31,2.6],"wake":[1,0.5]},
+         "effects":[{"m":"sleep","start":39,"end":39,"to":5.6}]},
+        {"id":"luigi","name":"Luigi Esposito","first":"Luigi","age":85,"device":"Garmin Lily 2","sync":"05:30","status":"watch",
+         "reason":"HRV trending down ~20% over 2 weeks",
+         "note":"Luigi's heart rate variability has drifted down about 20% over the last two weeks. Activity and sleep are steady. Keep an eye on it; no visit needed yet.",
+         "method":"Method: 28-day personal baseline, EWMA slope −20% over 14 days, z-score −1.8",
+         "base":{"steps":[3900,320],"sleep":[6.9,0.35],"rhr":[67,1.7],"hrv":[30,2.2],"wake":[2,0.6]},
+         "effects":[{"m":"hrv","start":30,"end":43,"to":24}]},
+        {"id":"francesca","name":"Francesca Greco","first":"Francesca","age":80,"device":"Apple Watch Series 9","sync":"07:05","status":"watch",
+         "reason":"Steps ~25% below usual for 4 days",
+         "note":"Francesca has been about 25% less active than usual for the last 4 days. Sleep and heart measures are in her usual range. A quick call could explain it.",
+         "method":"Method: 28-day personal baseline, z-score −1.9 (steps), 4 consecutive days below band",
+         "base":{"steps":[4200,300],"sleep":[7.0,0.3],"rhr":[65,1.5],"hrv":[29,2.4],"wake":[1,0.5]},
+         "effects":[{"m":"steps","start":40,"end":40,"to":3150}]},
+        {"id":"carlo","name":"Carlo Romano","first":"Carlo","age":88,"device":"Fitbit Charge 6","sync":"3 days ago","syncSub":"26 Oct","status":"gap","gap":3,
+         "reason":"No sync for 3 days — check device or charging",
+         "note":"No data has arrived from Carlo's Fitbit since Monday 26 October. The watch may be uncharged or unpaired. Consider a phone call to check the device.",
+         "method":"Method: data completeness check, no records since 26 Oct",
+         "base":{"steps":[3300,300],"sleep":[6.8,0.35],"rhr":[69,1.6],"hrv":[25,2.2],"wake":[2,0.6]},"effects":[]},
+        {"id":"rosa","name":"Rosa Marino","first":"Rosa","age":79,"device":"Apple Watch SE","sync":"2 days ago","syncSub":"27 Oct","status":"gap","gap":2,
+         "reason":"No sync for 2 days — check device or charging",
+         "note":"No data has arrived from Rosa's Apple Watch since Tuesday 27 October. The watch may be uncharged or left off. Consider a phone call to check the device.",
+         "method":"Method: data completeness check, no records since 27 Oct",
+         "base":{"steps":[4500,330],"sleep":[7.1,0.3],"rhr":[66,1.5],"hrv":[29,3],"wake":[1,0.5]},"effects":[]},
+        {"id":"paolo","name":"Paolo Ricci","first":"Paolo","age":76,"device":"Garmin","sync":"07:22","status":"stable","reason":"Within usual range",
+         "base":{"steps":[6800,450],"sleep":[7.3,0.3],"rhr":[60,1.4],"hrv":[38,3],"wake":[1,0.5]},"effects":[]},
+        {"id":"lucia","name":"Lucia Bruno","first":"Lucia","age":81,"device":"Fitbit","sync":"06:48","status":"stable","reason":"Within usual range",
+         "base":{"steps":[4600,340],"sleep":[7.0,0.3],"rhr":[65,1.5],"hrv":[30,2.4],"wake":[1,0.5]},"effects":[]},
+        {"id":"antonio","name":"Antonio Gallo","first":"Antonio","age":73,"device":"Apple Watch","sync":"07:35","status":"stable","reason":"Within usual range",
+         "base":{"steps":[7400,480],"sleep":[7.2,0.3],"rhr":[59,1.4],"hrv":[41,3],"wake":[1,0.4]},"effects":[]},
+        {"id":"teresa","name":"Teresa Conti","first":"Teresa","age":84,"device":"Garmin","sync":"06:15","status":"stable","reason":"Within usual range",
+         "base":{"steps":[3700,300],"sleep":[6.9,0.35],"rhr":[68,1.6],"hrv":[26,2.2],"wake":[2,0.5]},"effects":[]},
+        {"id":"marco","name":"Marco De Luca","first":"Marco","age":77,"device":"Fitbit","sync":"07:02","status":"stable","reason":"Within usual range",
+         "base":{"steps":[6000,420],"sleep":[7.1,0.3],"rhr":[63,1.5],"hrv":[35,2.8],"wake":[1,0.5]},"effects":[]}
+      ]
+    </script>
+    <script src="hark.js"></script>
+    <script src="chart.js"></script>
+    <script src="datalabels.js"></script>
+    <script src="hark-charts.js"></script>
+    <script>
+      (function () {
+        var DAYS = 44, TODAY = 43, BASE_N = 28;
+        var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        var nf = new Intl.NumberFormat("en-GB");
+        var METRICS = [
+          { k: "steps", title: "Steps", stat: "Steps / day", unit: "steps", cap: "Daily steps", dec: 0 },
+          { k: "sleep", title: "Sleep hours", stat: "Sleep (h)", unit: "h", cap: "Hours asleep per night", dec: 1 },
+          { k: "rhr", title: "Resting HR", stat: "Resting HR (bpm)", unit: "bpm", cap: "Resting heart rate, bpm", dec: 0 },
+          { k: "hrv", title: "HRV", stat: "HRV (ms)", unit: "ms", cap: "Heart rate variability, ms", dec: 0 },
+        ];
+        var WAKE = { k: "wake", stat: "Night wakings", dec: 1 };
+        var STATUS = {
+          high: { label: "High", rank: 0 },
+          watch: { label: "Watch", rank: 1 },
+          gap: { label: "Data gap", rank: 2 },
+          stable: { label: "Stable", rank: 3 },
+        };
+        var OUTCOMES = {
+          none: { label: "No issue", status: "stable", reason: "Reviewed by Giulia — no issue found" },
+          followup: { label: "Follow-up needed", status: "watch", reason: "Follow-up needed — reviewed by Giulia" },
+          gp: { label: "Escalated to GP", status: "high", reason: "Escalated to GP — reviewed by Giulia" },
+        };
+
+        function el(id) { return document.getElementById(id); }
+        function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]; }); }
+        function fmt(v, dec) { return v == null || isNaN(v) ? "—" : dec ? v.toFixed(dec) : nf.format(Math.round(v)); }
+        function now() { var d = new Date(); return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+        function dateOf(i) { var d = new Date(Date.UTC(2026, 9, 29 - (TODAY - i))); return d.getUTCDate() + " " + MONTHS[d.getUTCMonth()]; }
+        function chip(s) { return '<span class="x-status x-status--' + s + '">' + STATUS[s].label + "</span>"; }
+
+        // Deterministic mock data: a seeded generator per client, so every load looks the same.
+        function hash(s) { var h = 2166136261; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+        function rng(seed) {
+          return function () {
+            seed = (seed + 0x6d2b79f5) | 0;
+            var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+        function gauss(r) { var u = r() || 1e-9, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+        function effectAt(c, m, i, base) {
+          var v = base;
+          c.effects.forEach(function (e) {
+            if (e.m !== m || i < e.start) return;
+            var p = Math.min(1, (i - e.start + 1) / (e.end - e.start + 1));
+            v = base + (e.to - base) * p;
+          });
+          return v;
+        }
+        function median(a) { var s = a.slice().sort(function (x, y) { return x - y; }), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; }
+
+        function build(c, idx) {
+          var r = rng(hash(c.id)), series = {}, bl = {}, have = 0, total = 0;
+          ["steps", "sleep", "rhr", "hrv", "wake"].forEach(function (m) {
+            var b = c.base[m];
+            series[m] = [];
+            for (var i = 0; i < DAYS; i++) {
+              var mu = effectAt(c, m, i, b[0]);
+              var sd = m === "steps" ? b[1] * (mu / b[0]) : b[1];
+              var v = mu + Math.max(-1.5, Math.min(1.5, gauss(r))) * sd;
+              v = m === "sleep" ? Math.round(v * 10) / 10 : Math.max(0, Math.round(v));
+              var drop = r() < 0.02 && i < TODAY;
+              var missing = (c.gap && i > TODAY - c.gap) || drop;
+              series[m].push(missing ? null : v);
+              if (i > TODAY - 30) { total++; if (!missing) have++; }
+            }
+            var vals = series[m].slice(0, BASE_N).filter(function (v) { return v != null; });
+            var med = median(vals);
+            var mad = median(vals.map(function (v) { return Math.abs(v - med); }));
+            var rsd = Math.max(1.4826 * mad, b[1]);
+            bl[m] = { med: med, lo: Math.max(0, med - 2 * rsd), hi: med + 2 * rsd };
+          });
+          var log = [{ t: c.syncSub ? c.syncSub : c.sync, text: "Last data received from " + c.device }];
+          if (c.status !== "stable") log.unshift({ t: "08:00", text: "Flagged " + STATUS[c.status].label + " by detection engine: " + c.reason });
+          return Object.assign({}, c, { order: idx, series: series, bl: bl, completeness: Math.round((have / total) * 100), visit: null, review: null, log: log });
+        }
+
+        var clients = Hark.data("clients-data").map(build);
+        var filter = "all", query = "", current = null, range = 30, editingVisit = false, charts = [];
+
+        // ---------- Screen 1: priorities ----------
+        function counts() { var o = { high: 0, watch: 0, gap: 0, stable: 0 }; clients.forEach(function (c) { o[c.status]++; }); return o; }
+        function renderTiles() {
+          var o = counts(), need = o.high + o.watch + o.gap;
+          el("t-all").textContent = clients.length;
+          ["high", "watch", "gap", "stable"].forEach(function (k) { el("t-" + k).textContent = o[k]; });
+          el("nav-count").textContent = need;
+          el("summary-line").textContent = need + " of " + clients.length + " clients need attention today. Start at the top of the list.";
+          var items = [["all", "All", clients.length], ["high", "High", o.high], ["watch", "Watch", o.watch], ["gap", "Data gap", o.gap], ["stable", "Stable", o.stable]];
+          el("filters").innerHTML = items.map(function (it) {
+            return '<button class="x-filter" type="button" data-filter="' + it[0] + '" aria-pressed="' + (filter === it[0]) + '">' + it[1] + " <span>" + it[2] + "</span></button>";
+          }).join("");
+        }
+        function row(c) {
+          return "<tr>" +
+            '<th scope="row">' + esc(c.name) + "<small>" + c.age + " · " + esc(c.device) + "</small></th>" +
+            '<td data-label="Last sync">' + esc(c.sync) + (c.syncSub ? "<small>" + esc(c.syncSub) + "</small>" : "") + "</td>" +
+            '<td data-label="Status"><div class="x-cell-stack">' + chip(c.status) +
+            (c.visit ? '<span class="pill">Visit ' + esc(c.visit.day.toLowerCase()) + " " + esc(c.visit.time) + "</span>" : "") + "</div></td>" +
+            '<td data-label="Reason">' + esc(c.reason) + (c.review && c.review.note ? "<small>“" + esc(c.review.note) + "”</small>" : "") + "</td>" +
+            '<td><button class="btn x-rowbtn" type="button" data-id="' + c.id + '" aria-label="View ' + esc(c.name) + '">View</button></td></tr>';
+        }
+        function renderRows() {
+          var q = query.trim().toLowerCase();
+          var list = clients.slice()
+            .sort(function (a, b) { return STATUS[a.status].rank - STATUS[b.status].rank || a.order - b.order; })
+            .filter(function (c) { return (filter === "all" || c.status === filter) && (!q || (c.name + " " + c.device).toLowerCase().indexOf(q) > -1); });
+          el("rows").innerHTML = list.length ? list.map(row).join("") : '<tr><td colspan="5" class="x-empty">No clients match this filter.</td></tr>';
+        }
+
+        // ---------- Screen 2: client detail ----------
+        function recent(c, m) {
+          var vals = c.series[m].slice(TODAY - 2).filter(function (v) { return v != null; });
+          return vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
+        }
+        function renderStats(c) {
+          el("d-stats").innerHTML = METRICS.concat([WAKE]).map(function (m) {
+            var v = recent(c, m.k), med = c.bl[m.k].med, diff = "";
+            if (v != null && m.k !== "wake") { var p = Math.round(((v - med) / med) * 100); diff = " (" + (p > 0 ? "+" : p < 0 ? "−" : "±") + Math.abs(p) + "%)"; }
+            var label = v == null ? m.stat + " · no data in last 3 days" : m.stat + " · usual " + fmt(med, m.dec) + diff;
+            return '<div class="stat"><span class="stat__fig">' + fmt(v, m.dec) + '</span><span class="stat__label">' + esc(label) + "</span></div>";
+          }).join("");
+        }
+        function renderVisit() {
+          var c = current, box = el("visit-box");
+          if (c.visit && !editingVisit) {
+            box.innerHTML = '<div class="x-form"><p><span class="chip chip--solid">Visit scheduled</span></p>' +
+              "<p>" + esc(c.visit.day) + " (" + esc(c.visit.date) + ") at " + esc(c.visit.time) + ", Giulia Bianchi.</p>" +
+              '<button class="btn" type="button" id="visit-change">Change visit</button></div>';
+            return;
+          }
+          var times = [];
+          for (var h = 8; h <= 17; h++) ["00", "30"].forEach(function (mm) { times.push(String(h).padStart(2, "0") + ":" + mm); });
+          var cur = c.visit || { day: "Today", time: "10:30" };
+          box.innerHTML = '<form class="x-form" id="visit-form"><fieldset><legend>Day</legend><div class="x-opts">' +
+            [["Today", "Thu 29 Oct"], ["Tomorrow", "Fri 30 Oct"]].map(function (d) {
+              return '<label class="x-opt"><input type="radio" name="day" value="' + d[0] + '" data-date="' + d[1] + '"' + (cur.day === d[0] ? " checked" : "") + " /><span>" + d[0] + " · " + d[1] + "</span></label>";
+            }).join("") + "</div></fieldset>" +
+            '<div><label class="x-label" for="visit-time">Time</label><select class="x-input" id="visit-time">' +
+            times.map(function (t) { return "<option" + (t === cur.time ? " selected" : "") + ">" + t + "</option>"; }).join("") +
+            '</select></div><button class="btn" type="submit">Schedule visit</button></form>';
+        }
+        function renderLog(c) {
+          el("d-log").innerHTML = c.log.map(function (e) { return "<li><time>" + esc(e.t) + "</time><span>" + esc(e.text) + "</span></li>"; }).join("");
+        }
+        function renderDetail() {
+          var c = current;
+          el("d-name").textContent = c.name;
+          el("d-meta").innerHTML = ['<span class="pill">' + c.age + " years</span>", '<span class="pill">' + esc(c.device) + "</span>",
+            '<span class="pill">Last sync ' + esc(c.sync) + (c.syncSub ? " · " + esc(c.syncSub) : "") + "</span>",
+            '<span class="pill">Data completeness ' + c.completeness + "%</span>"].join(" ");
+          el("d-badges").innerHTML = chip(c.status) + (c.visit ? ' <span class="chip chip--solid">Visit scheduled · ' + esc(c.visit.day) + " " + esc(c.visit.time) + "</span>" : "");
+          var flagged = !!c.note;
+          el("d-why-head").textContent = flagged ? "Why flagged" : "Summary";
+          el("d-note").innerHTML = flagged ? esc(c.note) : "<strong>Within usual range.</strong> All measures have stayed within " + esc(c.first) + "'s usual range over the last 30 days. No action needed.";
+          el("d-method").textContent = c.method || "Method: 28-day personal baseline, all metrics within ±2 robust SD, no drift or change-point detected";
+          el("d-review").textContent = c.review ? "Reviewed by Giulia at " + c.review.t + ": " + c.review.label + (c.review.note ? " — “" + c.review.note + "”" : "") : "";
+          renderStats(c);
+          renderVisit();
+          renderLog(c);
+        }
+        function drawCharts() {
+          charts.forEach(function (ch) { ch.destroy(); });
+          charts = [];
+          var c = current, from = DAYS - range, labels = [];
+          for (var i = from; i < DAYS; i++) labels.push(dateOf(i));
+          el("d-charts").innerHTML = METRICS.map(function (m) {
+            var b = c.bl[m.k];
+            return '<figure class="chart"><figcaption class="chart__cap">' + m.title + "<small>" + m.cap + ", last " + range + " days · usual " + fmt(b.lo, m.dec) + "–" + fmt(b.hi, m.dec) + "</small></figcaption>" +
+              '<div class="chart__canvas"><canvas id="c-' + m.k + '" role="img" aria-label="' + m.title + ": last 3 days average " + fmt(recent(c, m.k), m.dec) + " " + m.unit + ", usual range " + fmt(b.lo, m.dec) + " to " + fmt(b.hi, m.dec) + '"></canvas></div></figure>';
+          }).join("");
+          METRICS.forEach(function (m) {
+            var b = c.bl[m.k], data = c.series[m.k].slice(from);
+            var out = data.map(function (v) { return v != null && (v < b.lo || v > b.hi); });
+            var pts = out.map(function (o) { return o ? "var(--chart-bad)" : "var(--chart-ink)"; });
+            charts.push(new Chart(el("c-" + m.k), {
+              type: "line",
+              data: {
+                labels: labels,
+                datasets: [
+                  { label: "Usual low", data: labels.map(function () { return b.lo; }), borderColor: "var(--chart-reference)", borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, fill: false },
+                  { label: "Usual range", data: labels.map(function () { return b.hi; }), borderColor: "var(--chart-reference)", backgroundColor: "var(--chart-reference)", borderWidth: 0, pointRadius: 0, pointHoverRadius: 0, fill: "-1" },
+                  {
+                    label: m.title, data: data, borderColor: "var(--chart-ink)", spanGaps: false,
+                    pointRadius: out.map(function (o) { return o ? 3.5 : range === 7 ? 2.5 : 0; }),
+                    pointHoverRadius: 4, pointBackgroundColor: pts, pointBorderColor: pts,
+                  },
+                ],
+              },
+              options: {
+                interaction: { mode: "index", intersect: false },
+                scales: { y: { ticks: { callback: function (v) { return fmt(v, m.dec && v % 1 ? 1 : 0); } } } },
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    filter: function (it) { return it.datasetIndex === 2; },
+                    callbacks: { label: function (ctx) { return fmt(ctx.raw, m.dec) + " " + m.unit + (out[ctx.dataIndex] ? " · outside usual range" : ""); } },
+                  },
+                },
+              },
+            }));
+          });
+        }
+
+        // ---------- Navigation ----------
+        function show(v) {
+          ["priorities", "detail", "how"].forEach(function (id) { el("view-" + id).hidden = id !== v; });
+          [].forEach.call(document.querySelectorAll(".x-navbtn"), function (b) {
+            if (b.dataset.view === (v === "how" ? "how" : "priorities")) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+          });
+          window.scrollTo(0, 0);
+        }
+        function openClient(id) {
+          current = clients.find(function (c) { return c.id === id; });
+          editingVisit = false;
+          el("outcome-form").reset();
+          el("outcome-confirm").textContent = "";
+          show("detail");
+          renderDetail();
+          drawCharts();
+          el("d-name").focus({ preventScroll: true });
+        }
+        function refreshList() { renderTiles(); renderRows(); }
+
+        document.querySelector(".x-side").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-view]");
+          if (!b) return;
+          show(b.dataset.view);
+          if (b.dataset.view === "priorities") refreshList();
+        });
+        el("filters").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-filter]");
+          if (!b) return;
+          filter = b.dataset.filter;
+          refreshList();
+        });
+        el("search").addEventListener("input", function (e) { query = e.target.value; renderRows(); });
+        el("rows").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-id]");
+          if (b) openClient(b.dataset.id);
+        });
+        el("back").addEventListener("click", function () {
+          var id = current && current.id;
+          show("priorities");
+          refreshList();
+          var b = id && el("rows").querySelector('[data-id="' + id + '"]');
+          if (b) b.focus();
+        });
+        document.querySelector(".x-seg").addEventListener("click", function (e) {
+          var b = e.target.closest("[data-range]");
+          if (!b) return;
+          range = +b.dataset.range;
+          [].forEach.call(this.querySelectorAll("button"), function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+          drawCharts();
+        });
+        el("visit-box").addEventListener("click", function (e) {
+          if (e.target.id === "visit-change") { editingVisit = true; renderVisit(); }
+        });
+        el("visit-box").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var day = e.target.querySelector('input[name="day"]:checked'), time = el("visit-time").value, c = current;
+          c.visit = { day: day.value, date: day.dataset.date, time: time };
+          c.log.unshift({ t: now(), text: "Wellness visit scheduled for " + day.value.toLowerCase() + " (" + day.dataset.date + ") at " + time + " by Giulia Bianchi" });
+          editingVisit = false;
+          renderDetail();
+        });
+        el("outcome-form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          var c = current, o = OUTCOMES[e.target.querySelector('input[name="outcome"]:checked').value];
+          var note = el("outcome-note").value.trim(), t = now();
+          c.status = o.status;
+          c.reason = o.reason;
+          c.review = { label: o.label, note: note, t: t };
+          if (c.visit) c.log.unshift({ t: t, text: "Visit completed (" + c.visit.day.toLowerCase() + " " + c.visit.time + ")" });
+          c.visit = null;
+          editingVisit = false;
+          c.log.unshift({ t: t, text: "Outcome recorded: " + o.label + (note ? " — “" + note + "”" : "") + ". Status set to " + STATUS[o.status].label + "." });
+          renderDetail();
+          refreshList();
+          e.target.reset();
+          el("outcome-confirm").textContent = "Saved. " + c.first + " is now " + STATUS[o.status].label + " on the priority list.";
+        });
+
+        refreshList();
+      })();
+    </script>
+  </body>
+</html>
